@@ -10,6 +10,7 @@ from main.enum.tokenEnum import TokenEnum
 from main.utils.jwtUtil import JwtUtil
 from main.utils.cookieUtil import CookieUtil
 from main.views.tokenViewSet import TokenViewSet
+from django.contrib.auth.hashers import check_password, make_password
 
 class AuthViewSet(viewsets.ModelViewSet):
     queryset = Auth.objects.all()
@@ -18,6 +19,7 @@ class AuthViewSet(viewsets.ModelViewSet):
     accessTokenName = TokenEnum.TOKEN_NAME.value
     refreshTokenName = TokenEnum.REFRESH_NAME.value
 
+    @action(detail=False, methods=['POST'], url_path='authentication')
     def authenticate(self, request, response):
         try:
             auth = request.data
@@ -27,8 +29,7 @@ class AuthViewSet(viewsets.ModelViewSet):
                 authDB = Auth.objects.get(username=auth.username)
             else:
                 raise rest_exceptions.ParseError("User not Found")
-            # valid = bcrypt.compare(auth.password, authDB.password)
-            valid = True
+            valid = check_password(auth.password, authDB.password)
             if not valid:
                 raise rest_exceptions.ParseError("Incorrect Email or Password , try again.")
 
@@ -44,6 +45,7 @@ class AuthViewSet(viewsets.ModelViewSet):
         except:
             raise rest_exceptions.ParseError("Can't Authenticate")
 
+    @action(detail=False, methods=['GET'], url_path='refresh')
     def refresh(self, request, response):
         accessToken = CookieUtil.getCookieValue(request, self.accessTokenName)
         jwt = self.tokenService.findByToken(accessToken)
@@ -69,6 +71,7 @@ class AuthViewSet(viewsets.ModelViewSet):
         else:
             raise rest_exceptions.ParseError("Access Token not expired, also can't be refreshed")
 
+    @action(detail=False, methods=['GET'], url_path='logout')
     def logout(self, request, response):
         try:
             jwt = CookieUtil.getCookieValue(request, self.accessTokenName)
@@ -79,6 +82,7 @@ class AuthViewSet(viewsets.ModelViewSet):
         except:
             raise rest_exceptions.ParseError("LogOut not accepted")
 
+    @action(detail=False, methods=['GET'], url_path='isLoggedIn')
     def isLoggedIn(self, request):
         jwt  = CookieUtil.getCookieValue(request, self.accessTokenName)
         try:
@@ -88,17 +92,17 @@ class AuthViewSet(viewsets.ModelViewSet):
         JwtUtil.extractSubject(jwtDB.key)
         return true
 
+    @action(detail=False, methods=['POST'], url_path='acceptAuth')
     def acceptAuth(self, request, response):
         auth = request.data
         authDB = authRepository.findByEmail(auth.email)
         if(self.tokenService.getTokenValidation(request, authDB.id) == false):
             raise rest_exceptions.ParseError(JwtType.INVALID_USER.value)
-        # valid = bcrypt.compare(auth.password, authDB.password)
-        valid = True
+        valid = check_password(auth.password, authDB.password)
         if not valid:
             raise rest_exceptions.ParseError("Incorrect Email or Password , try again.")
 
-    def list(self, request):
+    def findAll(self):
         users = self.get_queryset()
         serializer = self.get_serializer(users, many=True)
         return Response(serializer.data)
@@ -132,7 +136,7 @@ class AuthViewSet(viewsets.ModelViewSet):
         jwtDB = self.tokenService.findByToken(accessToken)
         authID = JwtUtil.extractSubject(jwtDB.key)
         authDB = Auth.objects.get(id=int(authID))
-        # authDB.password  = await bcrypt.hash(auth.password, 10)
+        authDB.password  = make_password(auth.password, salt=10, hasher='bcrypt')
         if (auth.email != None):
             authDB.email = auth.email
         if (auth.username != None):
