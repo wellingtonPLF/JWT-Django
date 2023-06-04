@@ -5,4 +5,4 @@ class TokenSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Token
-        fields = ('key')
+        fields = ('key', 'auth_id')

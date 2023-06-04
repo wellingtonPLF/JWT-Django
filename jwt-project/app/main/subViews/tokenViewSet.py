@@ -1,14 +1,14 @@
 from main.subModels.token import Token
 from main.subModels.auth import Auth
 from main.serializers.tokenSerializer import TokenSerializer
-from rest_framework import viewsets
+from rest_framework import exceptions as rest_exceptions
 from rest_framework_simplejwt import tokens
 from main.enum.tokenEnum import TokenEnum
 from main.enum.jwtEnum import JwtEnum
 from main.utils.jwtUtil import JwtUtil
 from main.utils.cookieUtil import CookieUtil
 
-class TokenViewSet(viewsets.ModelViewSet):
+class TokenService():
     queryset = Token.objects.all()
     serializer_class = TokenSerializer
     accessTokenName = TokenEnum.TOKEN_NAME.value
@@ -39,11 +39,10 @@ class TokenViewSet(viewsets.ModelViewSet):
         auth_roles = auth.roles.all()
         return auth_roles
 
-    def insert(self, newToken):
-        serializer = self.get_serializer(data=newToken)
-        if serializer.is_valid():
-            serializer.save()
-        else:
+    def insert(self, token):
+        try:
+            token.save()
+        except:
             raise rest_exceptions.ParseError("Can't insert token!")
 
     def atualizar(self, newToken):
@@ -64,7 +63,7 @@ class TokenViewSet(viewsets.ModelViewSet):
         try:
             Token.objects.get(auth_id = pk).delete()
         except:
-            raise rest_exceptions.ParseError("Can't remove by auth_id")
+            pass #No token relationated with that auth_id
 
     def getTokenValidation(self, request, pk):
         admin = 1

@@ -1,8 +1,8 @@
 from django.contrib import admin
 from rest_framework import routers
 from django.urls import include, path, re_path
-from main.views._routes import router
-from main.views.userViewSet import UserViewSet
+from main.views import router
+from main.subViews.userViewSet import UserViewSet
 
 urlpatterns = [
     path('admin/', admin.site.urls),

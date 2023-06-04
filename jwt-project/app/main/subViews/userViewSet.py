@@ -9,13 +9,15 @@ from rest_framework_simplejwt import tokens
 from main.enum.tokenEnum import TokenEnum
 from main.utils.jwtUtil import JwtUtil
 from main.utils.cookieUtil import CookieUtil
-from main.views.authViewSet import AuthViewSet
-from main.views.tokenViewSet import TokenViewSet
+from main.subViews.authViewSet import AuthViewSet
+from main.subViews.tokenViewSet import TokenService
+from main.authenticate import UserAuthentication
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
+    authentication_classes = [UserAuthentication]
     authService = AuthViewSet()
-    tokenService = TokenViewSet()
+    tokenService = TokenService()
     serializer_class = UserSerializer
     accessTokenName = TokenEnum.TOKEN_NAME.value
     refreshTokenName = TokenEnum.REFRESH_NAME.value
@@ -24,7 +26,7 @@ class UserViewSet(viewsets.ModelViewSet):
         users = self.get_queryset()
         serializer = self.get_serializer(users, many=True)
         return Response(serializer.data)
-    
+
     #detail=True => /users/{id}/testando/
     #detail=False => /users/testando/
     @action(detail=False, methods=['GET'], url_path='getUser')
@@ -41,13 +43,16 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     def create(self, request):
-        try:
-            serializer = self.get_serializer(data=request.data)
-            if serializer.is_valid():
-                serializer.save()
+        data = request.data
+        auth_id = data.get("auth_id")
+        auth = Auth.objects.get(id=auth_id) if auth_id else None
+
+        serializer = self.get_serializer(data=data)
+        if serializer.is_valid():
+            serializer.save(auth=auth)
             return Response(serializer.data)
-        except:
-            raise rest_exceptions.ParseError("Can't Create Auth")
+        else:
+            return Response(serializer.errors)
 
     def update(self, request):
         user = request.data
@@ -68,7 +73,7 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(serializer.errors)
 
     def destroy (self, request, response, pk):
-        if id == None:
+        if pk == None:
             raise rest_exceptions.ParseError("UserId is null")
 		
         auth = self.authService.findByUserID(pk)

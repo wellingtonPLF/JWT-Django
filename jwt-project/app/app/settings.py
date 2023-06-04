@@ -30,15 +30,15 @@ ALLOWED_HOSTS = []
 
 #=====================================================
 CORS_ALLOW_CREDENTIALS=True
-# CSRF_COOKIE_SECURE=True
-# CSRF_COOKIE_HTTP_ONLY=True
-# CSRF_TRUSTED_ORIGINS=[
-#     "http://localhost:5173"
-# ]
-# CORS_EXPOSE_HEADERS=["Content-Type", "X-CSRFToken"]
-# SESSION_COOKIE_SECURE=True
-# CSRF_COOKIE_SAMESITE="Lax"
-# SESSION_COOKIE_SAMESITE="Lax"
+CSRF_COOKIE_SECURE=True
+CSRF_COOKIE_HTTP_ONLY=True
+CSRF_TRUSTED_ORIGINS=[
+    "http://localhost:5173"
+]
+CORS_EXPOSE_HEADERS=["Content-Type", "X-CSRFToken"]
+SESSION_COOKIE_SECURE=True
+CSRF_COOKIE_SAMESITE="Lax"
+SESSION_COOKIE_SAMESITE="Lax"
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
@@ -89,7 +89,10 @@ REST_FRAMEWORK = {
     ]
 }
 
-# AUTH_USER_MODEL = "main.Auth"
+PASSWORD_HASHERS = (
+    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
+    'django.contrib.auth.hashers.BCryptPasswordHasher'
+)
 
 #=====================================================
 
