@@ -10,6 +10,8 @@ from main.utils.cookieUtil import CookieUtil
 
 class TokenService():
     queryset = Token.objects.all()
+    cookieUtil = CookieUtil()
+    jwtUtil = JwtUtil()
     serializer_class = TokenSerializer
     accessTokenName = TokenEnum.TOKEN_NAME.value
     
@@ -45,12 +47,10 @@ class TokenService():
         except:
             raise rest_exceptions.ParseError("Can't insert token!")
 
-    def atualizar(self, newToken):
-        token = Token.objects.get(id = newToken.id)
-        serializer = self.get_serializer(token, data=newToken)
-        if serializer.is_valid():
-            serializer.save()
-        else:
+    def update(self, token):
+        try:
+            token.save()
+        except:
             raise rest_exceptions.ParseError("Can't update token!")
 
     def delete(self, pk):
@@ -67,9 +67,9 @@ class TokenService():
 
     def getTokenValidation(self, request, pk):
         admin = 1
-        accessToken = CookieUtil.getCookieValue(request, self.accessTokenName)
+        accessToken = self.cookieUtil.getCookieValue(request, self.accessTokenName)
         jwt = self.findByToken(accessToken)
-        authID = JwtUtil.extractSubject(jwt.key)
+        authID = self.jwtUtil.extractSubject(jwt.key, TokenEnum.TOKEN_NAME)
         authList = self.findAuthRolesByAuthId(int(authID))
         result = next(filter(lambda obj: obj.id == admin, authList), None)
         

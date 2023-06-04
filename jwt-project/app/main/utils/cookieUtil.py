@@ -1,13 +1,8 @@
 from datetime import timedelta
-# from django.http import HttpResponse, HttpRequest
 
 class CookieUtil:
-    def __init__(self):
-        self.response = HttpResponse()
-        self.request = HttpRequest()
 
-    def getCookieValue(request, name):
-        cookieAccess = None
+    def getCookieValue(self, request, name):
         try:
             cookieAccess = request.COOKIES.get(name)
             if (cookieAccess == None):
@@ -16,7 +11,7 @@ class CookieUtil:
         except:
             return None
 	
-    def create(response, name, value, secure, domain):
+    def create(self, response, name, value, secure, domain):
 
         config = { 
             "expires": timedelta(days=365), 
@@ -25,9 +20,8 @@ class CookieUtil:
             "domain": domain,
             "path": "/"
         }
-
         #CookieName, TokenValue, Config
         response.set_cookie(name, value, **config)
         
-    def clear(response, name):
+    def clear(self, response, name):
         response.delete_cookie(name)

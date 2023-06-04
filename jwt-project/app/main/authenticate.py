@@ -7,12 +7,17 @@ class AuthAuthentication(BaseAuthentication):
 
         if method == "GET" and "/isLoggedIn/" in request.path:
             return None
+        elif method == "GET" and "/refresh" in request.path:
+            return None
+        elif method == "GET" and "/logout" in request.path:
+            return None
         elif method == "POST" and "/authentication" in request.path:
             return None
         elif method == "POST" and "/" in request.path:
             return None
         else:
-            raise AuthenticationFailed('Access denied.')
+            return None
+            # raise AuthenticationFailed('Access denied.')
 
 class UserAuthentication(BaseAuthentication):
     def authenticate(self, request):
@@ -21,4 +26,5 @@ class UserAuthentication(BaseAuthentication):
         if method == "GET" and "/getUser/" in request.path:
             return None
         else:
-            raise AuthenticationFailed('Access denied.')
+            return None
+            # raise AuthenticationFailed('Access denied.')

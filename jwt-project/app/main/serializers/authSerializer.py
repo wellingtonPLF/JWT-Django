@@ -5,4 +5,4 @@ class AuthSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Auth
-        fields = ('username', 'email', 'password')
+        fields = ('id','username', 'email', 'password')

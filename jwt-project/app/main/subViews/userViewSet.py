@@ -7,10 +7,11 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework_simplejwt import tokens
 from main.enum.tokenEnum import TokenEnum
+from main.enum.jwtEnum import JwtEnum
 from main.utils.jwtUtil import JwtUtil
 from main.utils.cookieUtil import CookieUtil
 from main.subViews.authViewSet import AuthViewSet
-from main.subViews.tokenViewSet import TokenService
+from main.services.tokenService import TokenService
 from main.authenticate import UserAuthentication
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -18,6 +19,8 @@ class UserViewSet(viewsets.ModelViewSet):
     authentication_classes = [UserAuthentication]
     authService = AuthViewSet()
     tokenService = TokenService()
+    cookieUtil = CookieUtil()
+    jwtUtil = JwtUtil()
     serializer_class = UserSerializer
     accessTokenName = TokenEnum.TOKEN_NAME.value
     refreshTokenName = TokenEnum.REFRESH_NAME.value
@@ -31,22 +34,28 @@ class UserViewSet(viewsets.ModelViewSet):
     #detail=False => /users/testando/
     @action(detail=False, methods=['GET'], url_path='getUser')
     def getAuthenticatedUser(self, request):
-        accessToken = CookieUtil.getCookieValue(request, self.accessTokenName)
+        accessToken = self.cookieUtil.getCookieValue(request, self.accessTokenName)
         jwt = self.tokenService.findByToken(accessToken)
-        authID = JwtUtil.extractSubject(jwt.key)
-        authDB = Auth.objects.get(id=int(authID))
+        authID = self.jwtUtil.extractSubject(jwt.key, TokenEnum.TOKEN_NAME)
+        authDB = self.authService.findById(int(authID))
         try:
-            userDB = User.objects.get(auth_id=authDB.id)
+            userDB = User.objects.get(auth_id=authDB["id"])
         except User.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response("User sign in Token doesn't exist", status=status.HTTP_404_NOT_FOUND)
         serializer = self.get_serializer(userDB)
         return Response(serializer.data)
+
+    def get_user(self, id):
+        try:
+            return User.objects.get(id = id)
+        except User.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
     def create(self, request):
         data = request.data
         auth_id = data.get("auth_id")
-        auth = Auth.objects.get(id=auth_id) if auth_id else None
-
+        auth = self.authService.findById(auth_id) if auth_id else None
+        auth = Auth(**auth)
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             serializer.save(auth=auth)
@@ -54,32 +63,32 @@ class UserViewSet(viewsets.ModelViewSet):
         else:
             return Response(serializer.errors)
 
-    def update(self, request):
-        user = request.data
-        userDB = User.objects.get(id=user.id)
+    def update(self, request, pk):
+        user = {
+            'id': request.data["id"], 
+            'nickname': request.data["nickname"], 
+            'bornDate': request.data["bornDate"], 
+            'auth_id': request.data["auth_id"]
+        }
+        user = User(**user)
 
-        if user == None:
-            raise rest_exceptions.ParseError(JwtType.INVALID_USER.value)
-        authDB = self.authService.findByUserID(user.id)
+        if self.get_user(user.id) == None:
+            raise rest_exceptions.ParseError(JwtEnum.INVALID_USER.value)
+        if self.tokenService.getTokenValidation(request, user.auth.id) == False:
+            raise rest_exceptions.ParseError(JwtEnum.INVALID_USER.value)
 
-        if self.tokenService.getTokenValidation(authDB.id, request) == false:
-            raise rest_exceptions.ParseError(JwtType.INVALID_USER.value)
+        user.save()
+        serializer = UserSerializer(instance=user)
+        return Response(serializer.data)
 
-        user.auth = authDB
-        serializer = self.get_serializer(user, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors)
-
-    def destroy (self, request, response, pk):
+    def destroy (self, request, pk):
+        response = Response("Successfully Deletion.")
         if pk == None:
             raise rest_exceptions.ParseError("UserId is null")
-		
         auth = self.authService.findByUserID(pk)
-        if(self.tokenService.getTokenValidation(auth.id, request) == false):
-            raise rest_exceptions.ParseError(JwtType.INVALID_USER.toString())
+        if(self.tokenService.getTokenValidation(request, auth["id"]) == False):
+            raise rest_exceptions.ParseError(JwtEnum.INVALID_USER.toString())
         self.get_user(pk).delete()
-        CookieUtil.clear(response, self.accessTokenName)
-        CookieUtil.clear(response, self.refreshTokenName)
-        return Response("Successfully Deletion.",status=status.HTTP_204_NO_CONTENT)
+        self.cookieUtil.clear(response, self.accessTokenName)
+        self.cookieUtil.clear(response, self.refreshTokenName)
+        return response

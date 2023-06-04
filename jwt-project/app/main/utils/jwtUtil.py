@@ -4,12 +4,13 @@ from rest_framework_simplejwt import authentication as jwt_authentication
 from rest_framework_simplejwt import views as jwt_views
 from main.enum.tokenEnum import TokenEnum
 from rest_framework_simplejwt import serializers as jwt_serializers
-from rest_framework_simplejwt import exceptions as jwt_exceptions
+from rest_framework_simplejwt.exceptions import InvalidToken
+from rest_framework_simplejwt.tokens import RefreshToken
 # import secrets
 
 class JwtUtil(jwt_authentication.JWTAuthentication):
     
-    def generateToken(auth, tokenType):
+    def generateToken(self, auth, tokenType):
         token = None
         if (tokenType == TokenEnum.TOKEN_NAME):
             token = tokens.AccessToken.for_user(auth)
@@ -17,12 +18,17 @@ class JwtUtil(jwt_authentication.JWTAuthentication):
             token = tokens.RefreshToken.for_user(auth)
         return str(token)
 
-    def extractSubject(key):
+    def extractSubject(self, key, tokenType):
         try:
-            token = self.get_validated_token(key)
-            sub = self.get_user(token)
-            return sub
+            if (tokenType == TokenEnum.TOKEN_NAME):
+                token = self.get_validated_token(key)
+            elif (tokenType == TokenEnum.REFRESH_NAME):
+                token = RefreshToken(key)
+                if token['exp'] < token['iat']:
+                    raise InvalidToken('Token Expired')
+            user_id = token['user_id']
+            return user_id
         except:
-            raise jwt_exceptions.InvalidToken(
-                'Token Expired'
-            )
+            raise InvalidToken('Token Expired')
+
+        
