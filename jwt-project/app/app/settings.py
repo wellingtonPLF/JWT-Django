@@ -30,15 +30,6 @@ ALLOWED_HOSTS = []
 
 #=====================================================
 CORS_ALLOW_CREDENTIALS=True
-CSRF_COOKIE_SECURE=True
-CSRF_COOKIE_HTTP_ONLY=True
-CSRF_TRUSTED_ORIGINS=[
-    "http://localhost:5173"
-]
-CORS_EXPOSE_HEADERS=["Content-Type", "X-CSRFToken"]
-SESSION_COOKIE_SECURE=True
-CSRF_COOKIE_SAMESITE="Lax"
-SESSION_COOKIE_SAMESITE="Lax"
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(hours=1),
@@ -102,6 +93,7 @@ INSTALLED_APPS = [
     'main',
     'corsheaders',
     'rest_framework',
+    'django_seed',
 
     'django.contrib.admin',
     'django.contrib.auth',

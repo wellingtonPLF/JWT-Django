@@ -35,11 +35,6 @@ class TokenService():
         except Token.DoesNotExist:
             raise rest_exceptions.ParseError(JwtEnum.INVALID_AT.value)
         return token
-    
-    def findAuthRolesByAuthId(self, pk):
-        auth = Auth.objects.get(id=pk)
-        auth_roles = auth.roles.all()
-        return auth_roles
 
     def insert(self, token):
         try:

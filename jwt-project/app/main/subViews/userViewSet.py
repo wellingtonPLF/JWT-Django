@@ -10,14 +10,14 @@ from main.enum.tokenEnum import TokenEnum
 from main.enum.jwtEnum import JwtEnum
 from main.utils.jwtUtil import JwtUtil
 from main.utils.cookieUtil import CookieUtil
-from main.subViews.authViewSet import AuthViewSet
+from main.services.authService import AuthService
 from main.services.tokenService import TokenService
 from main.authenticate import UserAuthentication
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     authentication_classes = [UserAuthentication]
-    authService = AuthViewSet()
+    authService = AuthService()
     tokenService = TokenService()
     cookieUtil = CookieUtil()
     jwtUtil = JwtUtil()
@@ -52,16 +52,11 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
     def create(self, request):
-        data = request.data
-        auth_id = data.get("auth_id")
-        auth = self.authService.findById(auth_id) if auth_id else None
-        auth = Auth(**auth)
-        serializer = self.get_serializer(data=data)
+        serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(auth=auth)
+            serializer.save()
             return Response(serializer.data)
-        else:
-            return Response(serializer.errors)
+        return Response(serializer.errors)
 
     def update(self, request, pk):
         user = {

@@ -2,7 +2,6 @@ import bcrypt
 from django.contrib.auth.hashers import check_password, make_password
 from rest_framework import status
 from main.subModels.auth import Auth
-from main.subModels.user import User
 from main.subModels.token import Token
 from main.serializers.authSerializer import AuthSerializer
 from rest_framework import viewsets, exceptions as rest_exceptions
@@ -15,7 +14,6 @@ from main.enum.jwtEnum import JwtEnum
 from main.utils.cookieUtil import CookieUtil
 from main.services.tokenService import TokenService
 from main.authenticate import AuthAuthentication
-
 from datetime import timedelta
 
 class AuthViewSet(viewsets.ModelViewSet):
@@ -117,27 +115,6 @@ class AuthViewSet(viewsets.ModelViewSet):
             return Response("Accept Auth!")
         except:
             raise rest_exceptions.ParseError("Incorrect Email, try again.")
-
-    def findAll(self):
-        users = self.get_queryset()
-        serializer = self.get_serializer(users, many=True)
-        return serializer.data
-    
-    def findById(self, auth_id):
-        try:
-            authDB = Auth.objects.get(id=auth_id)
-        except Auth.DoesNotExist:
-            raise rest_exceptions.ParseError("The requested Id was not found.")        
-        serializer = AuthSerializer(instance=authDB)
-        return serializer.data
-    
-    def findByUserID(self, user_id):
-        try:
-            userDB = User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            raise rest_exceptions.ParseError("Can't find Auth by userID")
-        serializer = AuthSerializer(instance=userDB.auth)
-        return serializer.data
 
     def create(self, request):
         auth = request.data
