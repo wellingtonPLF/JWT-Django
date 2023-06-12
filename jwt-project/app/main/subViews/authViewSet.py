@@ -4,7 +4,8 @@ from rest_framework import status
 from main.subModels.auth import Auth
 from main.subModels.token import Token
 from main.serializers.authSerializer import AuthSerializer
-from rest_framework import viewsets, exceptions as rest_exceptions
+from rest_framework import viewsets
+from rest_framework.exceptions import ParseError
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework_simplejwt import tokens
@@ -36,20 +37,26 @@ class AuthViewSet(viewsets.ModelViewSet):
             elif "username" in auth:
                 authDB = Auth.objects.get(username=auth["username"])
             else:
-                raise rest_exceptions.ParseError("User not Found")
+                raise ParseError("User not Found")
             valid = check_password(auth["password"], authDB.password)
             if not valid:
-                raise rest_exceptions.ParseError("Incorrect Email or Password , try again.")
-            jwtToken = self.jwtUtil.generateToken(authDB, TokenEnum.TOKEN_NAME)
-            refreshToken = self.jwtUtil.generateToken(authDB, TokenEnum.REFRESH_NAME)
+                raise ParseError("Incorrect Email or Password , try again.")
+            jwtToken = self.jwtUtil.generateToken(authDB, TokenEnum.TOKEN_NAME.value)
+            refreshToken = self.jwtUtil.generateToken(authDB, TokenEnum.REFRESH_NAME.value)
             jwt = Token(key=jwtToken, auth=authDB)
             self.tokenService.deleteByAuthID(authDB.id)
             self.tokenService.insert(jwt)
             self.cookieUtil.create(response, self.accessTokenName, jwtToken, False, "localhost")
             self.cookieUtil.create(response, self.refreshTokenName, refreshToken, False, "localhost")
             return response
-        except:
-            raise rest_exceptions.ParseError("Can't Authenticate, credentials not correct.")
+        except Exception as error:
+            # raise ParseError(error)
+            raise ParseError("Can't Authenticate, credentials not correct.")
+
+    @action(detail=False, methods=['GET'], url_path='testando')
+    def testando(self, request):
+        response = Response(f"{request.COOKIES}")
+        return response
 
     @action(detail=False, methods=['GET'], url_path='refresh')
     def refresh(self, request):
@@ -57,27 +64,28 @@ class AuthViewSet(viewsets.ModelViewSet):
         accessToken = self.cookieUtil.getCookieValue(request, self.accessTokenName)
         jwt = self.tokenService.findByToken(accessToken)
         try:
-            expiredAcessToken = self.jwtUtil.extractSubject(jwt.key, TokenEnum.TOKEN_NAME)
+            expiredAcessToken = self.jwtUtil.extractSubject(jwt.key, TokenEnum.TOKEN_NAME.value)
         except:
             expiredAcessToken = None
         if (expiredAcessToken == None):
             refreshToken = self.cookieUtil.getCookieValue(request, self.refreshTokenName)
             if (refreshToken == None):
-                raise rest_exceptions.ParseError(JwtEnum.INVALID_RT.value)
+                raise ParseError(JwtEnum.INVALID_RT.value)
             try:
-                authID = self.jwtUtil.extractSubject(refreshToken, TokenEnum.REFRESH_NAME)
+                authID = self.jwtUtil.extractSubject(refreshToken, TokenEnum.REFRESH_NAME.value)
             except:
-                raise rest_exceptions.ParseError(JwtEnum.EXPIRED_RT.value)
+                raise ParseError(JwtEnum.EXPIRED_RT.value)
             authDB = Auth.objects.get(id=int(authID))
-            jwtToken = self.jwtUtil.generateToken(authDB, TokenEnum.TOKEN_NAME)
-            jwtRefresh = self.jwtUtil.generateToken(authDB, TokenEnum.REFRESH_NAME)
+            jwtToken = self.jwtUtil.generateToken(authDB, TokenEnum.TOKEN_NAME.value)
+            jwtRefresh = self.jwtUtil.generateToken(authDB, TokenEnum.REFRESH_NAME.value)
             jwt.key = jwtToken
             self.tokenService.update(jwt)
             self.cookieUtil.create(response, self.accessTokenName, jwtToken, False, "localhost")
             self.cookieUtil.create(response, self.refreshTokenName, jwtRefresh , False, "localhost")
+            print("REFRESH!!!!!!")
             return response
         else:
-            raise rest_exceptions.ParseError("Access Token not expired, also can't be refreshed")
+            raise ParseError("Access Token not expired, also can't be refreshed")
 
     @action(detail=False, methods=['GET'], url_path='logout')
     def logout(self, request):
@@ -90,7 +98,7 @@ class AuthViewSet(viewsets.ModelViewSet):
             self.tokenService.delete(jwtDB.id)
             return response
         except:
-            raise rest_exceptions.ParseError("LogOut not accepted")
+            raise ParseError("LogOut not accepted")
 
     @action(detail=False, methods=['GET'], url_path='isLoggedIn')
     def isLoggedIn(self, request):
@@ -99,7 +107,7 @@ class AuthViewSet(viewsets.ModelViewSet):
             jwtDB = self.tokenService.findByToken(jwt)
         except:
             return Response(False)
-        self.jwtUtil.extractSubject(jwtDB.key, TokenEnum.TOKEN_NAME)
+        self.jwtUtil.extractSubject(jwtDB.key, TokenEnum.TOKEN_NAME.value)
         return Response(True)
 
     @action(detail=False, methods=['POST'], url_path='acceptAuth')
@@ -108,13 +116,13 @@ class AuthViewSet(viewsets.ModelViewSet):
         try:
             authDB = Auth.objects.get(email=auth["email"])
             if(self.tokenService.getTokenValidation(request, authDB.id) == False):
-                raise rest_exceptions.ParseError(JwtEnum.INVALID_USER.value)
+                raise ParseError(JwtEnum.INVALID_USER.value)
             valid = check_password(auth["password"], authDB.password)
             if not valid:
-                raise rest_exceptions.ParseError("Incorrect Password , try again.")
+                raise ParseError("Incorrect Password , try again.")
             return Response("Accept Auth!")
         except:
-            raise rest_exceptions.ParseError("Incorrect Email, try again.")
+            raise ParseError("Incorrect Email, try again.")
 
     def create(self, request):
         auth = request.data
@@ -123,7 +131,11 @@ class AuthViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=auth)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data)
+            authResponse = {
+                "id": serializer.data["id"],
+                "username": serializer.data["username"]
+            }
+            return Response(authResponse)
         return Response(serializer.errors)
 
     def update(self, request, pk):
@@ -132,7 +144,7 @@ class AuthViewSet(viewsets.ModelViewSet):
             salt = bcrypt.gensalt(10)
             accessToken = self.cookieUtil.getCookieValue(request, self.accessTokenName)
             jwtDB = self.tokenService.findByToken(accessToken)
-            authID = self.jwtUtil.extractSubject(jwtDB.key, TokenEnum.TOKEN_NAME)
+            authID = self.jwtUtil.extractSubject(jwtDB.key, TokenEnum.TOKEN_NAME.value)
             authDB = Auth.objects.get(id=int(authID))
             authDB.password  = make_password(auth["password"], salt=salt, hasher='bcrypt')
             if 'email' in auth:
@@ -142,11 +154,11 @@ class AuthViewSet(viewsets.ModelViewSet):
             authDB.save()
             return Response("Auth Updated")
         except:
-            raise rest_exceptions.ParseError("Something Went Wrong When Updating")
+            raise ParseError("Something Went Wrong When Updating")
 
     def destroy (self, request, pk):
         try:
             Auth.objects.get(id=pk).delete()
             return Response("Successfully Deletion.",status=status.HTTP_204_NO_CONTENT)
         except:
-            raise rest_exceptions.ParseError("The requested Auth Id was not found.")
+            raise ParseError("The requested Auth Id was not found.")

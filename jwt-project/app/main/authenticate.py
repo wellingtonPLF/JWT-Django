@@ -17,6 +17,8 @@ class AuthAuthentication(BaseAuthentication):
             return None
         elif method == "GET" and "/refresh" in request.path:
             return None
+        elif method == "GET" and "/testando" in request.path:
+            return None
         elif method == "GET" and "/logout" in request.path:
             return None
         else:

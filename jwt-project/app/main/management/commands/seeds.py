@@ -4,6 +4,7 @@ from main.subModels.auth import Auth
 from main.subModels.token import Token
 from main.subModels.role import Role
 from django.core.management.base import BaseCommand
+from django.contrib.auth.hashers import make_password
 import bcrypt
 
 # python manage.py seeds
@@ -34,11 +35,12 @@ class Command(BaseCommand):
             try:
                 Auth.objects.get(id=index + 1)
             except:
+                salt = bcrypt.gensalt(10)
                 obj = {
                     'id': index + 1,
                     'email': seeder.faker.email(),
                     'username': seeder.faker.user_name(),
-                    'password': bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+                    'password': make_password(password, salt=salt, hasher='bcrypt')
                 }
                 auth = Auth(**obj)
                 auth.save()

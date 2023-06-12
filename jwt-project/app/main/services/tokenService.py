@@ -64,7 +64,7 @@ class TokenService():
         admin = 1
         accessToken = self.cookieUtil.getCookieValue(request, self.accessTokenName)
         jwt = self.findByToken(accessToken)
-        authID = self.jwtUtil.extractSubject(jwt.key, TokenEnum.TOKEN_NAME)
+        authID = self.jwtUtil.extractSubject(jwt.key, TokenEnum.TOKEN_NAME.value)
         authList = self.findAuthRolesByAuthId(int(authID))
         result = next(filter(lambda obj: obj.id == admin, authList), None)
         

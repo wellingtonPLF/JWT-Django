@@ -36,7 +36,7 @@ class UserViewSet(viewsets.ModelViewSet):
     def getAuthenticatedUser(self, request):
         accessToken = self.cookieUtil.getCookieValue(request, self.accessTokenName)
         jwt = self.tokenService.findByToken(accessToken)
-        authID = self.jwtUtil.extractSubject(jwt.key, TokenEnum.TOKEN_NAME)
+        authID = self.jwtUtil.extractSubject(jwt.key, TokenEnum.TOKEN_NAME.value)
         authDB = self.authService.findById(int(authID))
         try:
             userDB = User.objects.get(auth_id=authDB["id"])
@@ -82,7 +82,7 @@ class UserViewSet(viewsets.ModelViewSet):
             raise rest_exceptions.ParseError("UserId is null")
         auth = self.authService.findByUserID(pk)
         if(self.tokenService.getTokenValidation(request, auth["id"]) == False):
-            raise rest_exceptions.ParseError(JwtEnum.INVALID_USER.toString())
+            raise rest_exceptions.ParseError(JwtEnum.INVALID_USER.value)
         self.get_user(pk).delete()
         self.cookieUtil.clear(response, self.accessTokenName)
         self.cookieUtil.clear(response, self.refreshTokenName)

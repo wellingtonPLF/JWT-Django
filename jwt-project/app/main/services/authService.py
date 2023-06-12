@@ -1,5 +1,9 @@
+from rest_framework import status
 from main.subModels.auth import Auth
 from main.subModels.user import User
+
+from main.custom.erroresult import ErrorExceptionResult
+
 from rest_framework.exceptions import AuthenticationFailed, ParseError
 from main.serializers.authSerializer import AuthSerializer
 from main.enum.tokenEnum import TokenEnum
@@ -19,7 +23,7 @@ class AuthService():
         try:
             return Auth.objects.get(id = id)
         except Auth.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(JwtEnum.INVALID_USER.value, status=status.HTTP_404_NOT_FOUND)
 
     def findAll(self):
         users = self.get_queryset()
@@ -30,7 +34,7 @@ class AuthService():
         try:
             authDB = self.get_auth(auth_id)
         except Auth.DoesNotExist:
-            raise ParseError("The requested Id was not found.")        
+            raise ParseError("The requested Id was not found.")     
         serializer = AuthSerializer(instance=authDB)
         return serializer.data
     
@@ -51,14 +55,10 @@ class AuthService():
         jwt = self.cookieUtil.getCookieValue(request, self.accessTokenName)
         try:
             self.tokenService.findByToken(jwt)
-        except:
-           raise ParseError(JwtEnum.INVALID_AT)
-        
-        authID = self.jwtUtil.extractSubject(jwt, TokenEnum.TOKEN_NAME)
-        try:
+            authID = self.jwtUtil.extractSubject(jwt, TokenEnum.TOKEN_NAME.value)
             auth = self.findAuthRolesByAuthId(int(authID))
-        except:
-            raise ParseError(JwtEnum.INVALID_USER)
-        
+        except Exception as error:
+            raise ErrorExceptionResult(status_code=status.HTTP_401_UNAUTHORIZED, detail=f'{error}', customType='EXPIRED_AT')
         roles = [obj.id for obj in auth]
+        print(roles)
         return roles
