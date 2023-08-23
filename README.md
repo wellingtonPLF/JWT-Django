@@ -27,3 +27,6 @@ Authentication using django framework. (⚙️)
 - POSTGRES_DB=
 - USERNAME=
 - PASSWORD=
+
+## Run 
+python .\manage.py runserver
