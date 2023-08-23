@@ -10,12 +10,12 @@ Authentication using django framework. (⚙️)
 - `pipenv install django`
 
 ## requirements.txt:
-- pipenv
-- django-seed
-- bcrypt
-- djangorestframework-simplejwt
-- djangorestframework
-- django-cors-headers
-- psycopg2
-- python-decouple
-- django-extensions
+- `pipenv`
+- `django-seed`
+- `bcrypt`
+- `djangorestframework-simplejwt`
+- `djangorestframework`
+- `django-cors-headers`
+- `psycopg2`
+- `python-decouple`
+- `django-extensions`
