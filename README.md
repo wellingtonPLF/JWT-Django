@@ -2,12 +2,12 @@
 Authentication using django framework. (⚙️)
 
 ## Steps:
-`>/ cd app`
-`>/ python -m venv venv`
-`>/ .\venv\Scripts\activate`
+- >/ `cd app`
+- >/ `python -m venv venv`
+- >/ `.\venv\Scripts\activate`
 
-`>/ pip install -r requirements.txt`
-`>/ pipenv install django`
+- >/ `pip install -r requirements.txt`
+- >/ `pipenv install django`
 
 ## requirements.txt:
 pipenv
