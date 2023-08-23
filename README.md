@@ -19,3 +19,11 @@ Authentication using django framework. (⚙️)
 - `psycopg2`
 - `python-decouple`
 - `django-extensions`
+
+## Crie um arquivo .env ao lado do manage.py
+
+- SECRET_KEY=my-super-secret-key
+- DEBUG=True
+- POSTGRES_DB=
+- USERNAME=
+- PASSWORD=
