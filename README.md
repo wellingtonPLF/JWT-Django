@@ -31,8 +31,8 @@ Authentication using django framework. (⚙️)
 ## Remove db.sqlite3 and update
 
 - Após remoção:
- - python manage.py migrate
- - python manage.py seeds
+- - python manage.py migrate
+  - python manage.py seeds
 
 ## Run 
 python .\manage.py runserver
