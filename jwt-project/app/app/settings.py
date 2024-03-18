@@ -23,13 +23,38 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY')
 
+# ======================================================
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['*']
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:4200",
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://localhost:8080"
+]
+
+CORS_ALLOW_CREDENTIALS=True
+CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_ALLOW_METHODS = [
+    'GET',
+    'POST',
+    'PUT',
+    'DELETE',
+]
+
+CORS_ALLOW_HEADERS = ['x-csrf-token', 'Content-Type']
+
+CSRF_COOKIE_DOMAIN = None
+CSRF_COOKIE_SECURE = False # Only transmitted over secure (HTTPS) = True or False
+# CSRF_COOKIE_SAMESITE = 'None' # Use only if CSRF_COOKIE_SECURE is set to True
 
 #=====================================================
-CORS_ALLOW_CREDENTIALS=True
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=1),
@@ -80,13 +105,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-]
-
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:4200",
-    "http://localhost:3000",
-    "http://localhost:5173",
-    "http://localhost:8080"
 ]
 
 ROOT_URLCONF = 'app.urls'
