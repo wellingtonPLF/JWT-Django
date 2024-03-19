@@ -1,6 +1,7 @@
 from rest_framework import status
 from main.subModels.auth import Auth
 from main.subModels.user import User
+from main.subModels.token import Token
 
 from main.custom.erroresult import ErrorExceptionResult
 
@@ -10,13 +11,11 @@ from main.enum.tokenEnum import TokenEnum
 from main.enum.jwtEnum import JwtEnum
 from main.utils.jwtUtil import JwtUtil
 from main.utils.cookieUtil import CookieUtil
-from main.services.tokenService import TokenService
 
 class AuthService():
     queryset = Auth.objects.all()
     jwtUtil = JwtUtil()
     cookieUtil = CookieUtil()
-    tokenService = TokenService()
     accessTokenName = TokenEnum.TOKEN_NAME.value
 
     def get_auth(self, id):
@@ -54,11 +53,13 @@ class AuthService():
     def getRoles(self, request):
         jwt = self.cookieUtil.getCookieValue(request, self.accessTokenName)
         try:
-            self.tokenService.findByToken(jwt)
+            try:
+                token = Token.objects.get(key=jwt)
+            except Token.DoesNotExist:
+                raise rest_exceptions.ParseError(JwtEnum.INVALID_AT.value)
             authID = self.jwtUtil.extractSubject(jwt, TokenEnum.TOKEN_NAME.value)
             auth = self.findAuthRolesByAuthId(int(authID))
         except Exception as error:
             raise ErrorExceptionResult(status_code=status.HTTP_401_UNAUTHORIZED, detail=f'{error}', customType='EXPIRED_AT')
         roles = [obj.id for obj in auth]
-        print(roles)
         return roles
