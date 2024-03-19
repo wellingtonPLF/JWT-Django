@@ -105,9 +105,9 @@ class AuthViewSet(viewsets.ModelViewSet):
         jwt  = self.cookieUtil.getCookieValue(request, self.accessTokenName)
         try:
             jwtDB = self.tokenService.findByToken(jwt)
+            self.jwtUtil.extractSubject(jwtDB.key, TokenEnum.TOKEN_NAME.value)
         except:
             return Response(False)
-        self.jwtUtil.extractSubject(jwtDB.key, TokenEnum.TOKEN_NAME.value)
         return Response(True)
 
     @action(detail=False, methods=['POST'], url_path='acceptAuth')
