@@ -165,6 +165,5 @@ class AuthViewSet(viewsets.ModelViewSet):
     def destroy (self, request, pk):
         try:
             Auth.objects.get(id=pk).delete()
-            return Response("Successfully Deletion.",status=status.HTTP_204_NO_CONTENT)
         except:
             raise ParseError("The requested Auth Id was not found.")
