@@ -143,7 +143,7 @@ class AuthViewSet(viewsets.ModelViewSet):
                 "username": serializer.data["username"]
             }
             return Response(authResponse)
-        return Response(serializer.errors)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def update(self, request, pk):
         try:
