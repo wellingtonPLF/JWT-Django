@@ -133,7 +133,8 @@ class AuthViewSet(viewsets.ModelViewSet):
     def create(self, request):
         auth = request.data
         salt = bcrypt.gensalt(10)
-        auth["password"]  = make_password(auth["password"], salt=salt, hasher='bcrypt')
+        if 'password' in auth:
+            auth["password"]  = make_password(auth["password"], salt=salt, hasher='bcrypt')
         serializer = self.get_serializer(data=auth)
         if serializer.is_valid():
             serializer.save()
