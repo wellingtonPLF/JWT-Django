@@ -152,7 +152,8 @@ class AuthViewSet(viewsets.ModelViewSet):
             jwtDB = self.tokenService.findByToken(accessToken)
             authID = self.jwtUtil.extractSubject(jwtDB.key, TokenEnum.TOKEN_NAME.value)
             authDB = Auth.objects.get(id=int(authID))
-            authDB.password  = make_password(auth["password"], salt=salt, hasher='bcrypt')
+            if 'password' in auth:
+                authDB.password  = make_password(auth["password"], salt=salt, hasher='bcrypt')
             if 'email' in auth:
                 authDB.email = auth["email"]
             if 'username' in auth:
