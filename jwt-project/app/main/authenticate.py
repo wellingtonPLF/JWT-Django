@@ -21,6 +21,8 @@ class AuthAuthentication(BaseAuthentication):
             return None
         elif method == "GET" and "/logout" in request.path:
             return None
+        elif method == "GET" and "/limitSize" in request.path:
+            return None
         else:
             roleList = self.authService.getRoles(request)
             if method == "GET" and "/" in request.path:
