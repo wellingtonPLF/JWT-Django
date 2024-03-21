@@ -70,6 +70,7 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
         return Response(serializer.errors)
 
+    #Apenas atualiza se o usuario authenticado for o mesmo que será usado para o update, else Error 500
     def update(self, request, pk):
         user = {
             'id': request.data["id"], 
