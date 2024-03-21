@@ -68,7 +68,7 @@ class UserViewSet(viewsets.ModelViewSet):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
-        return Response(serializer.errors)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     #if user Authenticated is equal user to Update then: "status 200" else: "status 500"
     def update(self, request, pk):
