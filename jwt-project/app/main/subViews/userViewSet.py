@@ -70,7 +70,7 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
         return Response(serializer.errors)
 
-    #Apenas atualiza se o usuario authenticado for o mesmo que será usado para o update, else Error 500
+    #if user Authenticated is equal user to Update then: "status 200" else: "status 500"
     def update(self, request, pk):
         user = {
             'id': request.data["id"], 
@@ -88,7 +88,8 @@ class UserViewSet(viewsets.ModelViewSet):
         user.save()
         serializer = UserSerializer(instance=user)
         return Response(serializer.data)
-
+        
+    #if user Authenticated is equal user to Delete then: "status 200" else: "status 500"
     def destroy (self, request, pk):
         response = Response("Successfully Deletion.")
         if pk == None:
